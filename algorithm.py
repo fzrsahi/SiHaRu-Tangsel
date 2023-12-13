@@ -3,24 +3,30 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import numpy as np
 import pandas as pd
+import locale
 
 df = pd.read_excel('dshouse.xlsx')
 
 x = df.drop('harga', axis=1)
 y = df['harga']
 
-# Misalkan Anda memiliki data dan target (X, y)
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+features = ['TipeRumah', 'Lantai', 'KamarTidur', 'KamarMandi', 'carpot']
+x = df[features]
+y = df['harga']
 
 # Membuat dan melatih model XGBoost
-xg_reg = xgb.XGBRegressor()
-xg_reg.fit(x_train, y_train)
+model = xgb.XGBRegressor(objective='reg:squarederror')
+model.fit(x, y)
 
 
+def input_attribute( tipe_rumah, jumlah_lantai, tipe_kamar, tipe_kamar_mandi, tipe_garasi):
+    # Mengubah tipe data menjadi integer (jika sesuai dengan kebutuhan model)
+    input_data = np.array([[tipe_rumah, jumlah_lantai, tipe_kamar, tipe_kamar_mandi, tipe_garasi]], dtype=np.int64)
+    formatted_rupiah = format_to_rupiah(model.predict(input_data)[0])
+    return formatted_rupiah
 
-def input_attribute():
-# Tipe Rumah, LT, LB, M2, Lantai, KT, KM, Listrik, Fasilitas Perum, Carpot, Univ, TransporUmum, Perkantoran, Market, Akses TOLL, Security
-    input_data = np.array([[6, 50, 50, 2000, 2, 2, 2, 2200, 3, 1, 6, 2, 7, 7, 4, 1]])
-    return xg_reg.predict(input_data)[0]
 
-print(input_attribute())
+def format_to_rupiah(angka):
+    locale.setlocale(locale.LC_ALL, 'id_ID')  # Mengatur locale ke Indonesia (id_ID)
+    formatted = locale.currency(angka, grouping=True, symbol=False)
+    return formatted
